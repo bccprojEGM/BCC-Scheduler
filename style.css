@@ -129,4 +129,31 @@ body {
         min-width: 140px;
     }
     .text-3xl { font-size: 1.5rem; }
+
+    #scheduleTable tr td:first-child {
+        position: relative;
+        left: auto;
+        box-shadow: none;
+    }
+
+    #scheduleTable tr th:first-child {
+        position: relative;
+        left: auto;
+    }
+}
+
+/* Custom Scrollbar for better UX on desktop */
+#tableContainer::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+#tableContainer::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+#tableContainer::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+#tableContainer::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
