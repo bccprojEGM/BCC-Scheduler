@@ -11,7 +11,7 @@ $action = $input['action'] ?? $_GET['action'] ?? '';
 if ($action === 'load_public') {
     try {
         $db = getDBConnection();
-        $stmt = $db->query("SELECT version FROM published_schedule ORDER BY id DESC LIMIT 1");
+        $stmt = $db->query("SELECT version, published_at FROM published_schedule ORDER BY id DESC LIMIT 1");
         $ver = $stmt->fetch();
         $version_id = $ver ? $ver['version'] : null;
 
@@ -40,7 +40,10 @@ if ($action === 'load_public') {
             'headers' => $headers->fetchAll(),
             'rows' => $rows->fetchAll(),
             'cells' => $cells,
-            'published' => ['version' => $version_id]
+            'published' => [
+                'version' => $version_id,
+                'published_at' => $ver['published_at']
+            ]
         ]);
         exit();
     } catch (Exception $e) {
@@ -74,11 +77,12 @@ try {
             $headers = $db->query("SELECT * FROM schedule_headers ORDER BY position")->fetchAll();
             $rows = $db->query("SELECT * FROM schedule_rows ORDER BY row_order")->fetchAll();
             $cells_raw = $db->query("SELECT * FROM schedule_cells")->fetchAll();
+            $last_mod = $db->query("SELECT MAX(updated_at) FROM schedule_cells")->fetchColumn();
             $cells = [];
             foreach ($cells_raw as $cell) {
                 $cells[$cell['row_id']][$cell['header_id']] = $cell;
             }
-            echo json_encode(['status' => 'success', 'headers' => $headers, 'rows' => $rows, 'cells' => $cells]);
+            echo json_encode(['status' => 'success', 'headers' => $headers, 'rows' => $rows, 'cells' => $cells, 'last_modified' => $last_mod]);
             break;
 
         case 'save_cell':
@@ -122,6 +126,17 @@ try {
             $stmt = $db->prepare("DELETE FROM schedule_headers WHERE id = ?");
             $stmt->execute([$input['id']]);
             echo json_encode(['status' => 'success']);
+            break;
+
+        case 'rename_header':
+            $stmt = $db->prepare("UPDATE schedule_headers SET header_name = ? WHERE id = ?");
+            $stmt->execute([$input['header_name'], $input['id']]);
+            echo json_encode(['status' => 'success']);
+            break;
+
+        case 'get_versions':
+            $stmt = $db->query("SELECT * FROM published_schedule ORDER BY published_at DESC");
+            echo json_encode(['status' => 'success', 'versions' => $stmt->fetchAll()]);
             break;
 
         case 'publish':

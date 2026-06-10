@@ -31,6 +31,13 @@ async function loadScheduleData(isAdmin = false) {
                 document.getElementById('scheduleTable').classList.remove('hidden');
                 renderTable(isAdmin);
             }
+
+            if (isAdmin && data.last_modified) {
+                const lmDisplay = document.getElementById('lastModifiedDisplay');
+                if (lmDisplay) {
+                    lmDisplay.textContent = `Last Modified: ${new Date(data.last_modified).toLocaleString()}`;
+                }
+            }
             
             // Update metadata
             const versionTag = document.getElementById('versionTag');
@@ -65,17 +72,26 @@ function renderTable(isAdmin = false) {
         const th = document.createElement('th');
         th.className = 'px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 bg-slate-50';
         
-        if (isAdmin && header.position > 1) {
+        if (isAdmin) {
             const container = document.createElement('div');
             container.className = 'flex justify-between items-center group';
+
             const span = document.createElement('span');
             span.textContent = header.header_name;
-            const btn = document.createElement('button');
-            btn.className = 'text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity';
-            btn.innerHTML = '<i class="bi bi-trash"></i>';
-            btn.onclick = () => deleteColumn(header.id);
+            span.className = 'cursor-pointer hover:text-teal-600 transition-colors';
+            span.title = 'Click to rename';
+            span.onclick = () => renameColumn(header.id, header.header_name);
+
             container.appendChild(span);
-            container.appendChild(btn);
+
+            if (header.position > 1) {
+                const btn = document.createElement('button');
+                btn.className = 'text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity';
+                btn.innerHTML = '<i class="bi bi-trash"></i>';
+                btn.onclick = (e) => { e.stopPropagation(); deleteColumn(header.id); };
+                container.appendChild(btn);
+            }
+
             th.appendChild(container);
         } else {
             th.textContent = header.header_name;
@@ -204,8 +220,154 @@ async function saveCell(rowId, headerId, content, formats = null) {
             hideSaveIndicator();
             if (!scheduleData.cells[rowId]) scheduleData.cells[rowId] = {};
             scheduleData.cells[rowId][headerId] = { ...cell, content: content };
+
+            // Update last modified display
+            const now = new Date();
+            const lmDisplay = document.getElementById('lastModifiedDisplay');
+            if (lmDisplay) {
+                lmDisplay.textContent = `Last Modified: ${now.toLocaleString()}`;
+            }
         }
     } catch (e) { showToast('error', 'Auto-save failed.'); }
+}
+
+async function manualSave() {
+    showSaveIndicator();
+    // In this implementation, change events already trigger saveCell.
+    // Manual save will just ensure the currently focused cell is saved and give feedback.
+    if (selectedCell) {
+        await saveCell(selectedCell.rowId, selectedCell.headerId, selectedCell.element.value);
+    }
+    showToast('success', 'All changes synchronized to server.');
+    hideSaveIndicator();
+}
+
+function togglePreview() {
+    const modal = document.getElementById('previewModal');
+    if (modal.classList.contains('hidden')) {
+        renderPreview();
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    } else {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+function renderPreview() {
+    const container = document.getElementById('previewContent');
+    container.innerHTML = '';
+
+    const table = document.createElement('table');
+    table.className = 'w-full border-collapse bg-white';
+
+    // Header
+    const thead = document.createElement('thead');
+    const trH = document.createElement('tr');
+    trH.className = 'bg-slate-50 border-b border-slate-200';
+
+    scheduleData.headers.forEach(h => {
+        const th = document.createElement('th');
+        th.className = 'px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200';
+        th.textContent = h.header_name;
+        trH.appendChild(th);
+    });
+    thead.appendChild(trH);
+    table.appendChild(thead);
+
+    // Body
+    const tbody = document.createElement('tbody');
+    scheduleData.rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-100';
+
+        scheduleData.headers.forEach((header, index) => {
+            const td = document.createElement('td');
+            td.className = 'p-4 border border-slate-100 align-top';
+
+            const cellInfo = (scheduleData.cells[row.id] && scheduleData.cells[row.id][header.id]) || null;
+            const content = cellInfo ? cellInfo.content : '';
+
+            if (content) {
+                const div = document.createElement('div');
+                if (index === 0) {
+                    div.className = 'font-bold text-teal-800 text-sm whitespace-nowrap';
+                    div.textContent = content;
+                } else {
+                    div.className = 'schedule-badge';
+                    if (cellInfo.bg_color) div.style.backgroundColor = cellInfo.bg_color;
+                    div.style.fontWeight = cellInfo.font_weight || 'normal';
+                    div.style.textAlign = cellInfo.text_align || 'left';
+
+                    content.split('\n').forEach((line, i) => {
+                        if (i > 0) div.appendChild(document.createElement('br'));
+                        div.appendChild(document.createTextNode(line));
+                    });
+                }
+                td.appendChild(div);
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    container.appendChild(table);
+}
+
+async function toggleVersions() {
+    const modal = document.getElementById('versionsModal');
+    if (modal.classList.contains('hidden')) {
+        await loadVersionHistory();
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    } else {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+async function loadVersionHistory() {
+    const container = document.getElementById('versionsList');
+    container.innerHTML = '<div class="text-center py-4"><i class="bi bi-arrow-repeat animate-spin text-2xl text-teal-600"></i></div>';
+
+    try {
+        const response = await fetch('api.php?action=get_versions');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            if (data.versions.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-500">No published versions yet.</p>';
+                return;
+            }
+
+            const list = document.createElement('div');
+            list.className = 'space-y-4';
+
+            data.versions.forEach(v => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200';
+
+                const info = document.createElement('div');
+                info.innerHTML = `
+                    <div class="font-bold text-slate-800">Version ${v.version}.0</div>
+                    <div class="text-xs text-slate-500">${new Date(v.published_at).toLocaleString()}</div>
+                `;
+
+                const badge = document.createElement('span');
+                badge.className = 'px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-bold';
+                badge.textContent = 'Published';
+
+                item.appendChild(info);
+                item.appendChild(badge);
+                list.appendChild(item);
+            });
+
+            container.innerHTML = '';
+            container.appendChild(list);
+        }
+    } catch (e) {
+        container.innerHTML = '<p class="text-center text-red-500">Failed to load history.</p>';
+    }
 }
 
 /**
@@ -260,6 +422,23 @@ async function deleteColumn(id) {
         });
         const data = await response.json();
         if (data.status === 'success') loadScheduleData(true);
+    } catch (e) { showToast('error', 'Error.'); }
+}
+
+async function renameColumn(id, currentName) {
+    const newName = prompt('Enter new column name:', currentName);
+    if (!newName || newName === currentName) return;
+    try {
+        const response = await fetch('api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'rename_header', id: id, header_name: newName, csrf_token: csrfToken })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            showToast('success', 'Column renamed.');
+            loadScheduleData(true);
+        }
     } catch (e) { showToast('error', 'Error.'); }
 }
 
