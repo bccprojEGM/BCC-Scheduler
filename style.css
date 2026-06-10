@@ -1,0 +1,132 @@
+/* Custom CSS for Binalbagan Catholic College Schedule System */
+
+:root {
+    --bcc-teal-dark: #0f766e;
+    --bcc-teal-light: #115e59;
+    --bcc-slate: #1e293b;
+}
+
+body {
+    color: #334155;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Table Styling */
+#scheduleTable th {
+    white-space: nowrap;
+    border: 1px solid #e2e8f0;
+}
+
+#scheduleTable td {
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+    min-width: 160px;
+}
+
+/* Admin Specific */
+.admin-cell {
+    position: relative;
+    padding: 0 !important;
+}
+
+.admin-cell textarea {
+    width: 100%;
+    height: 100%;
+    min-height: 100px;
+    padding: 0.75rem;
+    border: none;
+    background: transparent;
+    resize: none;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    outline: none;
+    display: block;
+}
+
+/* First column (Time) distinction */
+#scheduleTable tr td:first-child {
+    background-color: #f8fafc;
+    min-width: 140px;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+}
+
+#scheduleTable tr th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    background-color: #f1f5f9;
+}
+
+/* User View Badges */
+.schedule-badge {
+    background: #f8fafc;
+    border-left: 3px solid #0f766e;
+    padding: 0.625rem;
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.empty-slot {
+    font-style: italic;
+    color: #cbd5e1;
+    font-size: 0.75rem;
+}
+
+/* Animations */
+.show-toast {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+}
+
+/* Print Optimization */
+@media print {
+    .no-print, nav, #formattingToolbar, .bi-trash, .bi-trash-fill {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        padding: 0 !important;
+    }
+    
+    .print-container {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    #scheduleTable {
+        border: 1px solid #000 !important;
+        width: 100% !important;
+        table-layout: fixed;
+    }
+    
+    #scheduleTable th, #scheduleTable td {
+        border: 1px solid #ccc !important;
+        padding: 4px !important;
+        word-wrap: break-word;
+    }
+    
+    .schedule-badge {
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+
+    @page {
+        size: A4 landscape;
+        margin: 1cm;
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    #scheduleTable td {
+        min-width: 140px;
+    }
+    .text-3xl { font-size: 1.5rem; }
+}
