@@ -63,8 +63,8 @@ CREATE TABLE IF NOT EXISTS published_cells (
     bg_color VARCHAR(20),
     font_weight VARCHAR(20),
     text_align VARCHAR(20),
-    row_span INT,
-    col_span INT,
+    row_span INT DEFAULT 1,
+    col_span INT DEFAULT 1,
     version_id INT NOT NULL
 ) ENGINE=InnoDB;
 
@@ -75,8 +75,8 @@ CREATE TABLE IF NOT EXISTS published_schedule (
 ) ENGINE=InnoDB;
 
 -- Default Admin (password: admin123)
-INSERT INTO admins (username, password) VALUES 
-('admin', '$2y$10$XjsRm86wo1f/72GYgVb3rux18vu9sa.C//qbum8S/jJEKRp5hjPRy');
+-- Default Admin removed for Initial System Setup security.
+-- Use the Registration page to create the first admin account.
 
 -- Sample Data (Admin Workspace)
 INSERT INTO schedule_headers (id, header_name, position) VALUES 
