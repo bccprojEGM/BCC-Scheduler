@@ -93,9 +93,9 @@ INSERT IGNORE INTO schedule_cells (row_id, header_id, content) VALUES
 
 -- Seed Published (Version 1)
 INSERT IGNORE INTO published_schedule (id, version) VALUES (1, 1);
-INSERT INTO published_headers (id, header_name, position, version_id) SELECT id, header_name, position, 1 FROM schedule_headers;
-INSERT INTO published_rows (id, row_order, version_id) SELECT id, row_order, 1 FROM schedule_rows;
-INSERT INTO published_cells (row_id, header_id, content, bg_color, font_weight, text_align, row_span, col_span, version_id) 
+INSERT IGNORE INTO published_headers (id, header_name, position, version_id) SELECT id, header_name, position, 1 FROM schedule_headers;
+INSERT IGNORE INTO published_rows (id, row_order, version_id) SELECT id, row_order, 1 FROM schedule_rows;
+INSERT IGNORE INTO published_cells (row_id, header_id, content, bg_color, font_weight, text_align, row_span, col_span, version_id)
 SELECT row_id, header_id, content, bg_color, font_weight, text_align, row_span, col_span, 1 FROM schedule_cells;
 
 -- LDRRMO Crisis Reports Table
