@@ -97,3 +97,14 @@ INSERT INTO published_headers (id, header_name, position, version_id) SELECT id,
 INSERT INTO published_rows (id, row_order, version_id) SELECT id, row_order, 1 FROM schedule_rows;
 INSERT INTO published_cells (row_id, header_id, content, bg_color, font_weight, text_align, row_span, col_span, version_id) 
 SELECT row_id, header_id, content, bg_color, font_weight, text_align, row_span, col_span, 1 FROM schedule_cells;
+
+-- LDRRMO Crisis Reports Table
+CREATE TABLE IF NOT EXISTS ldrrmo_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    name VARCHAR(255),
+    phone VARCHAR(20) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'Pending'
+) ENGINE=InnoDB;
